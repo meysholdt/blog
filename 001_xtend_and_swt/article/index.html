@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Building SWT User Interfaces with Xtend</title>
+</head>
+<body>
+
+	<h1>Building SWT User Interfaces with Xtend</h1>
+
+	<p>
+		<i>Xtend is a new programming language that compiles to Java, but
+			adds new features, such as closures. This article applies Xtend to
+			implement SWT UIs and shows how the resulting code can be more
+			readable and concise compared to Java.</i>
+	</p>
+
+	<p>When you’ve been programming desktop applications with Eclipse
+		before, you probably have used the Standard Widget Toolkit (SWT),
+		since it provides the fundamental UI elements (aka Widgets), such as
+		windows, buttons, edit fields, checkboxes, etc.</p>
+
+	<p>The first thing you probably did was to create a window with
+		several nicely arranged widgets. This includes choosing the prober
+		parent widget for all widgets, configuring layouts, etc. Then, the
+		next step usually is to implement behavior for some widgets, so that
+		the user can interact with the UI. This includes for example
+		implementing selection listeners for buttons.</p>
+
+
+	<p>These two tasks have different characteristics:</p>
+
+	<ul>
+		<li>To arrange widgets nicely, the developer programmatically
+			creates trees of objects. In such a tree, windows are the root nodes,
+			composites etc. the intermediate nodes and buttons, text fields, etc.
+			are the leaf nodes. In the context of the web and HTML, an equivalent
+			tree is the DOM (Document Object Model). For SWT, this tree becomes
+			very visible in the XML-based approaches to specify UIs, such as
+			CookSwt and swtxml.</li>
+		<li>To implement behavior, the developer usually creates
+			anonymous or nested classes in Java. These classes implement event
+			handler and registered programmatically as event listeners.</li>
+	</ul>
+
+	<p>SWT User Interfaces are usually implemented using Java. However,
+		both identified patterns are not exactly nice to be implemented in
+		Java, because:</p>
+	<ul>
+		<li>Java doesn’t have a special pattern to create trees. The
+			standard pattern is to imperatively create objects and associate them
+			with each other. Whether the resulting objects form a tree or a graph
+			is not obvious to the reader of the code, since for him/her it is
+			just a linear sequence of statements.</li>
+		<li>Anonymous classes in Java have a particularly noisy syntax.
+			The extreme scenario (which is fairly common) is when the actual code
+			that handles the event is only one Java Statement.</li>
+	</ul>
+	
+	<h2>Designing User Interfaces using Trees: The Builder Syntax</h2>
+
+	<p>Xtend offers to improve the situation due to its support for the
+		“builder syntax” and its support for “closures”.</p>
+	<ul>
+		<li>Builder syntax allows to code that creates an object tree to
+			be formatted like a tree (using indentation an brackets).</li>
+		<li>Closures allow to define code that can be executed later.
+			This is similar to an anonymous class, but without the syntactic
+			overhead of a method declaration.</li>
+	</ul>
+
+	<p>The following snippet illustrates the builder syntax in Xtend.
+		As indicated already, the style of the code reflects the tree
+		structure of the SWT widgets. This example creates a shell with one
+		label, one text filed and one button. Additionally, it arranges them
+		using a GridLayout.</p>
+	<div style="float: right; margin-right: 200px; margin-top: 60px">
+		<img alt="Builder Syntax" src="images/buildersyntax.png" align="right">
+	</div>
+	<div>
+		<style type="text/css">
+			p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; padding: 0px; font: 11.0px Monaco}
+			p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco; color: #0138b1}
+			span.s1 {color: #941c64}
+			span.s2 {color: #bc4219}
+			span.s3 {color: #909090}
+			span.s4 {color: #0431c3}
+			span.s5 {color: #3a40f4}
+			span.s6 {color: #000000}
+			span.s7 {color: #0138b1}
+		</style>
+		<p class="p1"><span class="s1">val</span> shell = newShell(display) [<span >&nbsp;</span></p>
+		<p class="p1"><span >&nbsp; &nbsp; </span><span class="s2">layout</span> = <span class="s1">new</span> GridLayout(<span class="s3">3</span>, <span class="s1">false</span>)</p>
+		<p class="p1"><span>&nbsp; &nbsp; </span><span class="s2">newLabel</span>(SWT::<span class="s4">NONE</span>) [<span >&nbsp;</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="s2">text</span> = <span class="s5">"To:"</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; </span>] <span >&nbsp; &nbsp; &nbsp;</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; </span><span class="s2">newText</span>(SWT::<span class="s4">BORDER</span>) [</p>
+		<p class="p1"><span>&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="s2">layoutData</span> = newGridData() [</p>
+		<p class="p2"><span class="s6"><span >&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span></span>grabExcessHorizontalSpace<span class="s6"> = </span><span class="s1">true</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span><span class="s7">horizontalAlignment</span> = SWT::<span class="s4">FILL</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; &nbsp; &nbsp; </span>]</p>
+		<p class="p1"><span>&nbsp; &nbsp; </span>]</p>
+		<p class="p1"><span>&nbsp; &nbsp; </span><span class="s2">newButton</span>(SWT::<span class="s4">PUSH</span>) [</p>
+		<p class="p1"><span>&nbsp; &nbsp; &nbsp; &nbsp; </span><span class="s2">text</span> = <span class="s5">"Send"</span></p>
+		<p class="p1"><span>&nbsp; &nbsp; </span>]</p>
+		<p class="p1">]</p>
+	</div>
+	<p>When comparing the code from the Xtend snippet above to Java,
+		the following differences are noteworthy:</p>
+	<ul>
+		<li>
+			All code in the snippet above refers to Java elements from SWT, except
+			for the new*()-methods. Those are methods implemented in Java. They all
+			conform to the following pattern illustrated in the next code snippet.
+			<div>
+				<style type="text/css">
+					p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco}
+					span.s1 {color: #941c64}
+				</style>
+				<p class="p1"><span class="s1">public</span> <span class="s1">static</span> Button newButton(Composite parent, <span class="s1">int</span> style, Procedure1&lt;Button&gt; btn) {</p>
+				<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>Button btn = <span class="s1">new</span> Button(parent, style);</p>
+				<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>btn.apply(btn);</p>
+				<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">return</span> btn;</p>
+				<p class="p1">}</p>
+			</div> The new*()-methods can be invoked from the snippet like member
+			methods since they have been imported as extension methods. Extension
+			methods are methods defined in a different class which accept the
+			value of <code>this</code> or <code>it</code> as their first
+			parameter.
+		</li>
+		<li>You probably have noticed that all invocations of
+			new*()-methods are followed by a code block surrounded by brackets
+			"[]". This code block defines a closure which is passed as
+			the last parameter the new*()-method. You could as well pass in the
+			closure explicitly as the last parameter to the method. However, this
+			syntax can improve readability of the code. Since the closure has one
+			parameter and no return value, its class implements interface <code>Procedure1</code>.
+		</li>
+		<li>No closure in this example declare parameters. However, they
+			do have one implicit parameter. An example of a closure with
+			parameters is <code>[param | param.doSomething() ]</code>. Xtend
+			supports an implicit variable named <code>it</code>. If a closure
+			does not declare a parameter, the parameters' value can be accessed
+			through the variable <code>it</code>. Usage of the variable <code>it</code>
+			is also implicitly in the same way as you know it from <code>this</code>.
+			When accessing members of <code>it</code> (e.g. <code>horizontalAlignment</code>),
+			stating the name <code>it</code> is optional. Furthermore, you can
+			invoke extension methods on <code>it</code>: In the code snippet, the
+			method <code>newText(Composite, int)</code> has two parameters. The
+			value for <code>Composite</code> is the value of <code>it</code> from
+			the surrounding closure, which is in fact the shell (the window).
+		</li>
+		<li>Xtend allows to use Getter/Setter-pairs like properties:
+			Instead of <code>setText("Send")</code> you may write <code>text
+				= "Send"</code>
+		</li>
+	</ul>
+	
+	<h2>Implementing Interactive User Interfaces: Closures</h2>
+	<p>To implement event handlers it is common in Java to use
+		anonymous or nested classes. The snippet below uses Xtends closures to
+		do the same in a syntactically more concise way.</p>
+	<div style="float: right; margin-right: 200px; margin-top: 20px">
+		<img alt="Builder Syntax" src="images/eventhandling.png" align="right">
+	</div>
+	<div>
+	  <style type="text/css">
+	    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco}
+	    span.s1 {color: #bc4219}
+	    span.s2 {color: #0431c3}
+	    span.s3 {color: #3a40f4}
+	    span.s4 {color: #0138b1}
+	    span.s5 {color: #941c64}
+	  </style>
+		<p class="p1"><span class="s1">newButton</span>(SWT::<span class="s2">PUSH</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">text</span> = <span class="s3">"Send"</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>addListener(SWT::<span class="s2">Selection</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>newMessageBox((<span class="s4">widget</span> <span class="s5">as</span> Control).shell, SWT::<span class="s2">OK</span>) [<span> </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">message</span> = <span class="s3">"Hello World"</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>].open()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1">]</p>
+	</div>
+	<p>The snippet above uses the Builder Syntax (as described in the
+		last section) to create a Button. When the button is clicked, a
+		MessageBox will be created and shown to the user.</p>
+	<p>
+		The interesting part here is
+		<code>addListener(int, Listener)</code>
+		. This method accepts two parameters with the second parameter being
+		an instance of interface
+		<code>Listener</code>
+		. In the snippet the second parameter for
+		<code>addListener</code>
+		is a closure (the code block surrounded with
+		<code>[]</code>
+		in
+		<code>addListener(SWT::Selection) [ ... ]</code>
+		). When the Xtend code is compiled to Java, the closure is compiled
+		into an anonymous Java class which implements the interface
+		<code>Listener</code>
+		. This, however, is only possible for interfaces that have just one
+		method.
+	</p>
+
+
+	<h2>A Comprehensive Example</h2>
+	<div style="float: right; margin-right: 20px; margin-top: 00px">
+		<img alt="Builder Syntax" src="images/messageform.png" align="right">
+	</div>
+	<div>
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco; min-height: 15.0px}
+    p.p3 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco; color: #0138b1}
+    span.s1 {color: #941c64}
+    span.s2 {color: #909090}
+    span.s3 {color: #bc4219}
+    span.s4 {color: #0431c3}
+    span.s5 {color: #3a40f4}
+    span.s6 {color: #000000}
+    span.s7 {color: #0138b1}
+  </style>
+		<p class="p1"><span class="s1">package</span> blog_001_xtend_and_swt</p>
+		<p class="p2"><br></p>
+		<p class="p1"><span class="s1">import</span> org.eclipse.swt.SWT</p>
+		<p class="p1"><span class="s1">import</span> org.eclipse.swt.layout.GridLayout</p>
+		<p class="p1"><span class="s1">import</span> org.eclipse.swt.widgets.Display</p>
+		<p class="p2"><br></p>
+		<p class="p1"><span class="s1">import</span> <span class="s1">static</span> <span class="s1">extension</span> blog_001_xtend_and_swt.XtendSWTLib.*</p>
+		<p class="p2"><br></p>
+		<p class="p1"><span class="s1">class</span> MessageForm {</p>
+		<p class="p2"><br></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">def</span> <span class="s1">static</span> <span class="s1">void</span> main(String[] args) {</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">new</span> MessageForm().run(args)</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>}</p>
+		<p class="p2"><span> &nbsp;&nbsp; </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">def</span> <span class="s1">void</span> run(String[] args) {</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">val</span> display = <span class="s1">new</span> Display()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">val</span> shell = newShell(display) [<span> </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>setSize(<span class="s2">400</span>, <span class="s2">400</span>)</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">layout</span> = <span class="s1">new</span> GridLayout(<span class="s2">3</span>, <span class="s1">false</span>)</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">newLabel</span>(SWT::<span class="s4">NONE</span>) [<span> </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">text</span> = <span class="s5">"To:"</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>] <span>&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">val</span> to = <span class="s3">newText</span>(SWT::<span class="s4">BORDER</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">layoutData</span> = newGridData() [</p>
+		<p class="p3"><span class="s6"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>grabExcessHorizontalSpace<span class="s6"> = </span><span class="s1">true</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s7">horizontalAlignment</span> = SWT::<span class="s4">FILL</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">val</span> send = <span class="s3">newButton</span>(SWT::<span class="s4">PUSH</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">text</span> = <span class="s5">"Send"</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">val</span> msg = <span class="s3">newText</span>(SWT::<span class="s4">BORDER</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">layoutData</span> = newGridData() [</p>
+		<p class="p3"><span class="s6"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span>grabExcessHorizontalSpace<span class="s6"> = </span><span class="s1">true</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s7">grabExcessVerticalSpace</span> = <span class="s1">true</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s7">horizontalSpan</span> = <span class="s2">3</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s7">horizontalAlignment</span> = SWT::<span class="s4">FILL</span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s7">verticalAlignment</span> = SWT::<span class="s4">FILL</span><span> </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>send.addListener(SWT::<span class="s4">Selection</span>) [</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>newMessageBox(send.shell, SWT::<span class="s4">OK</span>) [<span> </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s3">message</span> = to.text + <span class="s5">"\n"</span> + msg.text</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>].open()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>]</p>
+		<p class="p2"><span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>shell.open()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">while</span> (!shell.isDisposed()) {</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="s1">if</span> (!display.readAndDispatch())</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>display.sleep()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>}</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>display.dispose()</p>
+		<p class="p1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>}</p>
+		<p class="p1">}</p>
+	</div>
+
+</body>
+</html>
