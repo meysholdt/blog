@@ -26,7 +26,7 @@
 
 	<p>The first thing you probably did was to create a window with
 		several nicely arranged widgets. This task includes choosing the
-		prober parent widget for all widgets, configuring layouts, etc. Then,
+		proper parent widget for all widgets, configuring layouts, etc. Then,
 		the next step usually is to implement behavior for some widgets, so
 		that the user can interact with the UI. This includes for example
 		implementing selection listeners for buttons.</p>
@@ -137,9 +137,9 @@
 					p.pb1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 11.0px Monaco}
 					span.sb1 {color: #941c64}
 				</style>
-				<p class="pb1"><span class="sb1">public</span> <span class="sb1">static</span> Button newButton(Composite parent, <span class="sb1">int</span> style, Procedure1&lt;Button&gt; btn) {</p>
+				<p class="pb1"><span class="sb1">public</span> <span class="sb1">static</span> Button newButton(Composite parent, <span class="sb1">int</span> style, Procedure1&lt;Button&gt; init) {</p>
 				<p class="pb1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>Button btn = <span class="sb1">new</span> Button(parent, style);</p>
-				<p class="pb1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>btn.apply(btn);</p>
+				<p class="pb1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span>init.apply(btn);</p>
 				<p class="pb1"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sb1">return</span> btn;</p>
 				<p class="pb1">}</p>
 			</div> The <code>new*()</code>-methods can be invoked from the
@@ -191,7 +191,7 @@
 		anonymous or nested classes. The snippet below uses Xtends closures to
 		do the same in a syntactically more concise way.</p>
 	<div style="float: right; margin-right: 150px; margin-top: 20px">
-		<img alt="Builder Syntax" src="images/eventhandling.png" align="right">
+		<img alt="Event Handling" src="images/eventhandling.png" align="right">
 	</div>
 	<div style="margin-top: 20px; margin-bottom: 20px">
 	  <style type="text/css">
@@ -238,7 +238,7 @@
 
 	<h2>A Comprehensive Example</h2>
 	<div style="float: right; margin-right: 20px; margin-top: 00px">
-		<img alt="Builder Syntax" src="images/messageform.png" align="right">
+		<img alt="Builder Syntax and Event Handling" src="images/messageform.png" align="right">
 	</div>
 	<div>
   <style type="text/css">
@@ -312,3 +312,14 @@
 
 </body>
 </html>
+
+
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://3.bp.blogspot.com/-LcjdRQRJP4c/TvNvfZTYQyI/AAAAAAAAAEE/a8-DqbkjY1g/s1600/messageform.png" imageanchor="1" style=""><img border="0" height="300" width="300" src="http://3.bp.blogspot.com/-LcjdRQRJP4c/TvNvfZTYQyI/AAAAAAAAAEE/a8-DqbkjY1g/s320/messageform.png" /></a></div>
+
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://4.bp.blogspot.com/-8WVcXt_llmQ/TvNve0-bS-I/AAAAAAAAADs/-uqswlCWMDM/s1600/buildersyntax.png" imageanchor="1" style=""><img border="0" height="64" width="172" src="http://4.bp.blogspot.com/-8WVcXt_llmQ/TvNve0-bS-I/AAAAAAAAADs/-uqswlCWMDM/s320/buildersyntax.png" /></a></div>
+
+<div class="separator" style="clear: both; text-align: center;">
+<a href="http://2.bp.blogspot.com/-99CmhXb300E/TvNvfIlYS5I/AAAAAAAAAD4/v56t1CBhgFg/s1600/eventhandling.png" imageanchor="1" style=""><img border="0" height="54" width="72" src="http://2.bp.blogspot.com/-99CmhXb300E/TvNvfIlYS5I/AAAAAAAAAD4/v56t1CBhgFg/s320/eventhandling.png" /></a></div>
+
