@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<body>
+
+
+<p>
+During the last year I had the pleasure to implement a formatter for a programming language. 
+You know, this little but incredibly useful thing that arranges indentation, line-wraps and whitespace 
+in your code nicely. If you know me, you may have guessed that the programming languages in question 
+is <a href="http://www.xtend-lang.org/">Xtend</a>. Version 2.4.0 is the first version to ship with this formatter.
+</p>
+
+<p>
+In case you haven't heard of Xtend, it is a language that compiles down to 
+human-readable Java code and integrates seamlessly with any Java project.
+</p>
+
+<p>
+We like to advertise Xtend as a language that is more concise and expressive compared to Java. 
+And indeed it is, due to powerful type inference, higher-order functions, and less syntactical noise. 
+Furthermore, Xtend supports concepts that provide a great degree of syntactical freedom to the developer. 
+Among them are extension methods, operator overloading, and an implicit variable called "it".
+</p>
+
+<p>
+This conciseness, expressiveness and syntactical freedom gives a great deal of power to the developer. 
+This is a power a developer can use to increase his/her efficiency and at the same time write code in exactly that 
+way that he/she considers the most readable to a human. 
+It makes Xtend a perfect match for <a href="http://www.eclipsecon.org/2013/sessions/internal-dsls-xtend">internal DSLs</a>.
+</p>
+
+<p>
+This has interesting consequences for formatting:
+</p>
+
+<ul>
+  <li>
+    People who care about the readability of their code do have a strong opinion about formatting. 
+    This is easy to explain: Unformatted code just isn't readable.
+  </li>
+  <li>
+    But the strong opinion is about more than just having the code formatted. 
+    It's about having the code formatted in exactly the way they consider the most readable.
+    Suddenly the formatting strategy doesn't depend on which syntactical element is being formatted, 
+    but on how a syntactical element is being used. This is an interesting thing I had to learn, 
+    as it is completely different from how the Eclipse Java formatter does its job.
+  </li>
+</ul>
+
+<p>
+The question is, how can a formatter decide how a syntactical element is being used? 
+The amount of APIs, internal DSLs and programming styles converges to infinite, so there is 
+no way of considering all of them. However, there are a small number of recurring formatting patterns. 
+</p>
+
+
+
+<h2>Example 1: The If-Expression</h2>
+
+<p>
+This is probably how you would express it in Java: 
+Imperative programming style and formatted as one line per statement:
+</p> 
+
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">var</span> String z</div>
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">if</span>(variable == <span style="color: #909090;">1</span>)</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; z = </span>"it is one"</div>
+<div style="color: #931a68; font-family: Monaco; font-size: 11px;">
+else</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; z = </span>"it differs from one"</div>
+
+<p>
+In Xtend, however, the if-statement is actually an if-expression, i.e. it has a result value. 
+Java has an If-Expression as well, it is the ternary operator: 
+<span style="font-family: Monaco; font-size: 11px;">(</span><span style="color: #0326cc; font-family: Monaco; font-size: 11px;">variable</span><span style="font-family: Monaco; font-size: 11px;"> == 1) ? </span><span style="color: #3933ff; font-family: Monaco; font-size: 11px;">"then"</span><span style="font-family: Monaco; font-size: 11px;"> : </span><span style="color: #3933ff; font-family: Monaco; font-size: 11px;">"else"</span>.
+Instead of assigning values inside the bodies of the if-statement, 
+we can directly assign the if-expression. 
+Besides being more concise, this has the tremendous advantage that 
+the variable can be immutable and will never exist in an uninitialized state.
+Here is the snippet, we choose to keep the formatting style from the example above:   
+</p>
+
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">val</span> y = <span style="color: #931a68;">if</span>(variable == <span style="color: #909090;">1</span>)</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; &nbsp; </span>"it is one"</div>
+<div style="color: #931a68; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; </span>else</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; &nbsp; </span>"it differs from one"</div>
+
+<p>
+We could also want to write it in a single line, 
+just like you would do it with the ternary operator in Java: 
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;"><span style="color: #931a68;">val</span><span style="color: black;"> x = </span><span style="color: #931a68;">if</span><span style="color: black;">(variable == </span><span style="color: #909090;">1</span><span style="color: black;">) </span>"it is one"<span style="color: black;"> </span><span style="color: #931a68;">else</span><span style="color: black;"> </span>"it differs from one"</div>
+</p>
+
+
+<p>
+What we see here are two different formatting patterns that are alternative to each other. 
+An if-expression can be formatted single-line as well as multi-line. You might argue that 
+it should be formatted multi-line when it is used as a statement and single-line when it 
+is used as an expression. While this might sound like a smart strategy at the beginning and 
+it will probably work for most scenarios, it will frustrate the developer for the remaining cases. 
+Frustration is something we should prevent by all costs. Therefore, the Xtend formatter 
+leaves the choice to the developer: It recognizes which formatting pattern the developer had in mind. 
+The decision strategy is as follows:  
+</p>
+
+<ol>
+<li>If the then- or the else-body contain at least one line-wrap, format the if-expression multi-line.</li>
+<li>If the length of the full if-expression exceeds the maximum length of a line, format it multi line.</li>
+<li>Apply single-line formatting in all other cases.</li>
+</ol>
+
+<p>
+This empowers the developer to choose for every individual if-expression, if he/she prefers the sing-line or multi-line style. 
+</p>
+
+
+
+
+<h2>Example 2: Lambda-Expressions</h2>
+
+<p>
+Thanks to lambda-expressions you can choose a functional programming style when you work with Xtend. 
+You can think of lambda-expressions as executable snippets of code that can be passed around in parameters and variables.
+</p>
+<p>
+The following example calculates the total size of all files within the same directory. 
+You can recognize the lambda-expressions by their square brackets "[" "]".
+</p>
+
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">val</span> file = <span style="color: #931a68;">new</span> java.io.File(<span style="color: #3933ff;">"."</span>)</div>
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">val</span> totalLength = file.listFiles.<span style="color: #bb4300;">filter</span>[isFile].<span style="color: #bb4300;">map</span>[length].<span style="color: #bb4300;">reduce</span>[x, y|x + y]</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">println(</span>"The size of all files in "<span style="color: black;"> + file + </span>" is "<span style="color: black;"> + totalLength + </span>" bytes."<span style="color: black;">)</span></div>
+<br/>
+
+<ul>
+	<li>
+	  <span style="color: #bb4300; font-family: Monaco; font-size: 11px;">filter</span><span style="font-family: Monaco; font-size: 11px;">[isFile]</span>
+	  removes all items from the list which are not files, such as directories.
+	</li>
+	<li>
+	  <span style="color: #bb4300; font-family: Monaco; font-size: 11px;">map</span><span style="font-family: Monaco; font-size: 11px;">[length]</span>
+	  converts a list of files into a list of integers, each representing the file size (length).
+	</li>
+	<li>
+	  <span style="color: #bb4300; font-family: Monaco; font-size: 11px;">reduce</span><span style="font-family: Monaco; font-size: 11px;">[x, y|x + y]
+	  </span>applies <span style="font-family: Monaco; font-size: 11px;">x + y</span> to all list items until all are summed up to a single value.
+	</li>
+</ul>
+
+<p>
+I think there is some beauty in this code since you can understand it just by reading it from the 
+left to the right. Furthermore, it is much more concise than anything you can do with loops in Java.
+</p>
+
+<p>
+For this code to be readable, surely we want the lambda-expressions to be formatted 
+without line-wraps, similar to parameters of a method call.
+</p>
+
+<p>
+Another use case for lambdas is to provide handlers for events and asynchronous communication. 
+The following example creates an instance of <span style="font-family: Monaco; font-size: 11px;">java.lang.Runnable</span>
+that prints to stdout when <span style="font-family: Monaco; font-size: 11px;">run()</span> is called.
+</p>
+
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">val</span>&nbsp;Runnable runnable = [ |</div>
+<div style="font-family: Monaco; font-size: 11px;">
+&nbsp; println(<span style="color: #3933ff;">"Hello from "</span> + Thread::currentThread.name)</div>
+<div style="font-family: Monaco; font-size: 11px;">
+]</div>
+
+<p>
+Here, a multi-line style of the lambda-expression may be preferable if the implementation of the handler 
+follows imperative programming style. If the lambda-expression does nothing but delegate to another method, a single-line style may be preferable.
+</p>
+
+<p>
+A third use case for lambda-expression are named parameter values. 
+In this example the assignments to
+<span style="font-family: Monaco; font-size: 11px;">name</span>&nbsp;and&nbsp;<span style="font-family: Monaco; font-size: 11px;">priority</span>
+are compiled to
+<span style="font-family: Monaco; font-size: 11px;">thread.setName(<span style="color: #3933ff;">...</span></span><span style="font-family: Monaco; font-size: 11px;">)</span>
+and
+<span style="font-family: Monaco; font-size: 11px;">thread.setPriority(</span><span style="color: #909090; font-family: Monaco; font-size: 11px;">...</span><span style="font-family: Monaco; font-size: 11px;">)</span>.
+</p>
+
+<div style="font-family: Monaco; font-size: 11px;">
+<span style="color: #931a68;">val</span> thread = <span style="color: #931a68;">new</span> Thread(runnable) =&gt; [</div>
+<div style="color: #3933ff; font-family: Monaco; font-size: 11px;">
+<span style="color: black;">&nbsp; name = </span>"my thread"</div>
+<div style="font-family: Monaco; font-size: 11px;">
+&nbsp; priority = Thread::<span style="color: #0326cc;">MIN_PRIORITY</span></div>
+<div style="font-family: Monaco; font-size: 11px;">
+]</div>
+
+<p>
+Here as well, a multi-line style is usually preferable.
+</p>
+
+<p>
+Similar to if-expressions, there is no automated way for the formatter to decide for single-line or multi-line formatting. Therefore, the decision strategy is as follows:
+</p>
+
+<ol>
+<li>If there is a line-wrap before the closing bracket "]", apply multi-line style.</li>
+<li>If the the length of the closure exceeds the maximum line length, apply multi-line style.</li>
+<li>Apply single-line style in any other cases.</li>
+</ol>
+
+<p>
+I decided that the "magic line-wrap" that triggers multi-line formatting of a lambda-expression should 
+only be the line-wrap before the closing bracket "]" to make it easier to convert a multi-line lambda back 
+to its single-line style. In this scenario, you'll only need to remove one single line-wrap and re-run 
+the formatter instead of removing multiple line-wraps.
+</p>
+
+
+<h2>Other Examples You Can Try</h2>
+<p>
+As of Xtend 2.4.0, the following formatting patterns are supported besides the ones listed above:<br />
+</p>
+
+<ul>
+<li>single-line/multi-line style for method parameter declarations, triggered by the line-wrap before the closing parenthesis ")".</li>
+<li>single-line/multi-line style for method call parameters, triggered by the line-wrap before the closing parenthesis ")".</li>
+<li>switch-exprssions can be formatted single-line or multi line.</li>
+<li>case-blocks inside switch-expressions can be formatted single-line or multi-line.</li>
+</ul>
+
+
+
+</body>
+</html>
