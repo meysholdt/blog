@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Measuring EMF Resource performance with Yourkit Probes</title>
+</head>
+<body>
+	<p>Disclaimer: I'm not affiliated with Yourkit, but I am grateful
+		for their free licenses ??? for open source projects. I've been using
+		Yourkit for my work on Xtext???/Xtend???.</p>
+	<h2>Introduction</h2>
+	<p>Improving the performance of an application can be a challenging
+		thing to do. As a developer, you usually have some immediate ideas of
+		what are the performance bottlenecks. However, as Ed said in his
+		presentation ??? at the last EclipseCon NA, "Don't trust yourself,
+		don't trust your friends, and don't even trust me."</p>
+	<p>I fully approve his message. Why? Experience shows there is
+		truth in this statement.</p>
+	<p>If trust does't work, we need facts: We need to measure. We need
+		to measure how much time execution of our program takes for specific
+		tasks. Two tools probably came to your mind when you read this:</p>
+	<ul>
+		<li>java.lang.System.nanoSeconds(): This simple but useful method
+			give you access to a decently precise time stamp at any time. You can
+			call this method from your own code and calculate and report the time
+			for what every your desire. But there's a catch: You need to modify
+			the code, which you sometimes can't do because the code is part of a
+			library/framework or you don't want to do it, because it would would
+			pollute the code.</li>
+		<li>A Profiler (such as Yourkit ???): This powerful tool lets you
+			measure measure the execution time of every since method invocation.
+			Sounds awesome? Yes, but there are some problems with it:</li>
+		<ul>
+			<li>The "lost in the jungle syndrome": The result of a profiling
+				session are a bunch of trees representing all stated of the call
+				stack your application had during the profiling session. And just
+				like in a jungle, these trees are incredibly huge. Sometimes the
+				profiler can point out some performance hot spots, but I think that
+				only works well if you have some very obvious performance problems.
+				So you end up spending a lot of time climbing through the trees,
+				considering for every branch whether its existence and time
+				consumption is justified.</li>
+			<li>Observing a system changes it: A profiler usually uses a
+				java agent, which is a hook in the JVM that allows to manipulate
+				class files before they're executed. This way the profiler can
+				inject byte code for performance measurements into the
+				to-be-analyzed classes. Surely this injected code is small and fast,
+				but it can have an impact on how the Java JIT can optimize the byte
+				code. Example: A method that could be in-lined before may not be
+				in-lined anymore. I don't mind if an application runs slower during
+				a profiling session, but I do mind if the times measured during
+				profiling are disproportional to the actual times.</li>
+			<li>Parameter values are not available: To understand what the
+				code is doing, you sometimes need to know the values of the method
+				parameters. Consider questions such as: Does a certain value occur
+				so often that introducing an early-exit to the method would improve
+				the speed? Does the same value occur because the method was
+				accidentally called from within a loop? Would it help to cache the
+				result of the method?</li>
+		</ul>
+	</ul>
+	<h2>Probes to the Rescue</h2>
+	<p>Yourkit allows you to have so-called Probes. Here are some facts
+		in a nutshell:</p>
+	<ul>
+		<li>A probe is a Java class that hooks into the invocation of
+			methods of the to-be-analyzed code. Such hooks can be registered to
+			be invoked before or after a method has been invoked.</li>
+		<li>Installing pre-/post-invocation hooks into methods may sounds
+			familiar to you from Aspect Oriented Programming (AOP). It's indeed
+			the same idea, but unlike in AOP you don't need to a special
+			compiler: Yourkit registers the probes at runtime via its Java agent.
+			Therefore, probes don't change your build and are applicable for
+			already compiled libraries.</li>
+		<li>You can use probes independently of CPU profiling
+			(sampling/tracing). A probe is active once it has been registered and
+			you can choose not to enable CPU profiling at the same time. This may
+			safe you from getting the "Observing a system changes it" bias.</li>
+		<li>Yourkit ships with a set of predefined probes for standard
+			events, such as Tread lifecycles, file system I/O, etc. You can as
+			well implement your own probes.</li>
+		<li>In a probe's implementation, you can access the hooked
+			method's parameter- and return values.</li>
+		<li>Youkit encourages you to build a Java data structure for your
+			measured data that resembles a relational data base. If you follow
+			that pattern, youkit has a nice graphical user interface to explore
+			your measured data.</li>
+	</ul>
+	<h2>Probing EMF ResourceSets and Resources</h2>
+
+</body>
+</html>
