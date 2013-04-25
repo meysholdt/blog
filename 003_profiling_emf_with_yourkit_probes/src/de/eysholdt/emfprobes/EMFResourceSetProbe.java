@@ -13,30 +13,29 @@ import com.yourkit.probes.Table;
 import com.yourkit.probes.This;
 
 public class EMFResourceSetProbe {
+	
 	private final static ResourceSetTable TABLE_RESOURCESET = new ResourceSetTable();
 
 	private static final class ResourceSetTable extends Table {
 		private final StringColumn NAME = new StringColumn("ResourceSet");
-
 		public ResourceSetTable() {
 			super("EMF ResourceSets", Table.MASK_FOR_POINT_EVENTS);
 		}
 	}
 
-	private static final ResourceTable TABLE_RESOURCE = new ResourceTable();
-
 	private static final class ResourceTable extends Table {
 		private final ForeignKeyColumn RESOURCESET_ID = new ForeignKeyColumn(TABLE_RESOURCESET);
 		private final StringColumn TYPE = new StringColumn("type");
 		private final StringColumn URI = new StringColumn("uri");
-
 		public ResourceTable() {
 			super("EMF Resource.load()", Table.LASTING_EVENTS | Table.RECORD_STACKTRACE_ON_ROW_CREATION);
 		}
 	}
 
+	private static final ResourceTable TABLE_RESOURCE = new ResourceTable();
+	
 	private final static ObjectRowIndexMap<ResourceSet> rs2rwo = new ObjectRowIndexMap<ResourceSet>();
-
+	
 	@MethodPattern("org.eclipse.emf.ecore.resource.impl.ResourceSetImpl:<init>()")
 	public static class ResourceSetInit {
 		public static void onEnter(@This final ResourceSet rs) {
@@ -84,4 +83,8 @@ public class EMFResourceSetProbe {
 		}
 
 	}
+
+	
+
+	
 }

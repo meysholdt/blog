@@ -87,6 +87,123 @@
 			your measured data.</li>
 	</ul>
 	<h2>Probing EMF ResourceSets and Resources</h2>
+	<p>As an example and for further illustration, I've build a small
+		probe that tracks instantiation of EMF ResourceSets and invocation of
+		EMF Resources. In the terminology of the Eclipse Modeling Framework
+		(EMF) a Resource usually represents a file from the file system. A
+		resource furthermore provides implementations to load a file into
+		memory as an object tree (aka model) or persist a tree back to disk.</p>
+	<p>The following screenshot shows an Eclipse with two open editors.
+		One editor shows an *.xtend ??? file and the other one a *.genmodel.
+		Even though both use EMF under the hood, they have little in common:</p>
+	<ol>
+		<li>The *.xtend text-editor shows a file persisted as plain text;
+			It's Resource.load() implementation delegates to an ANTLR parser.</li>
+		<li>The *.genmodel tree-editor shows the structure of a file that
+			is persisted as XML. Here, an XML parser is used.</li>
+	</ol>
+	<img src="images/emf_genmodel_and_xtend_editor.png" />
+	<p>The Yourkit probe was registered while opening both editors. The
+		following screenshot shows the measured data:</p>
+	<ul>
+		<li>In the tree view on the left hand side you can see all
+			available probes. The probe "EMF ResourceSets" has been developed by
+			me, all others ship with Yourkit. The checkbox does <i>not</i>
+			register/unregister the probe. The checkbox shows/hides the data
+			measured by the probe in the views on the right-hand side of the
+			tree-view.
+		</li>
+		<li>The table on the top on the right-hand side shows a list of
+			all ResourceSets that have been instantiated. The
+			AdapterFactoryEditingDomainResourceSet is the one used by the
+			*.genmodel editor. As you can see, there was more going on in my
+			Eclipse instance before I took the screenshot. A click on the column
+			labeled "stack trace" would reveal how a specific ResourceSet has
+			been instantiated.</li>
+		<li>The table on the bottom right-hand side shows all invocations
+			of Resource.load() for the ResourceSet that is selected in the table
+			above. Here we can see that tracking of application state is
+			possible: The column "uri" displays the file name of the file that
+			has been loaded. The "wall time" is the time in milliseconds that was
+			spent executing the load() method.</li>
+	</ul>
+	<img src="images/yourkit_open_genmodel.png">
+	<h2>Implementing a Probe</h2>
+	<p>
+		<i>You can find the full source code of this example here on
+			github.</i> ???
+	</p>
+	<p>Before we start implementing a probe, some considerations:</p>
+	<ul>
+		<li>The code that the probe hooks into needs to have the probe
+			implementation on the classpath. Furthermore, it is helpful if the
+			probe has the code it hooks into on the classpath, sicen otherwise
+			the probe implementation would need to use Java reflection to inspect
+			the to-be-analyzed object. This sounds tricky since it is in fact a
+			cyclic dependency between the probe and the inspected code. Luckily
+			Eclipse has a simple mechanism to contribute to plugin's classapth:
+			Fragments. A fragment is a bundle with class files, own dependencies
+			and extension points that at runtime is integrated into the classpath
+			of a chosen host-plugin. We choose org.eclipse.emf.ecore to be that
+			host-plugin.</li>
+		<li>Probes need to be registered ???: We could do that by
+			changing the JVM's startup arguments, but in an Eclipse environment
+			it seems more convenient to use the extension point
+			org.eclipse.ui.startup.</li>
+		<li>The probe implementation uses Java API provided by Yourkit.
+			This API ca be found in /lib/yjp.jar inside the Yourkit installation.</li>
+	</ul>
+	<p>The next screenshot shows the the implementation of the probe.
+		It is a java class with static members to
+	<ul>
+		<li>define the data structures for storing the measured values
+			(TABLE_RESOURCESET, TABLE_RESOURCE).</li>
+		<li>intercept calls to ResourceSet constructors (ResourceSetInit)
+			and Resource#load() invocations.</li>
+		<li>map ResourceSet-Objects to Table-Row-IDs (rs2row and
+			getResourceSetRow()).</li>
+	</ul>
+	<img src="images/probe_impl_tables.png" />
+	<p>Now that you've had an overview over the probe implementation,
+		here is finally the core, the actual hooks: Each method-hook is a
+		static Java class that can implement the static methods onEnter() and
+		onReturn(). Annotations are used for further configuration:</p>
+	<ul>
+		<li>@MethodPattern specifies the signature of the
+			to-be-intercepted method.</li>
+		<li>@This gives access to the object on which the method has been
+			called.</li>
+		<li>@OnEnterResult gives access to the return value of the
+			onEnter method.</li>
+		<li>@Param(1) gives access to the first parameter of the
+			intercepted method.</li>
+		<li>etc. (???)</li>
+	</ul>
+	<img src="images/probe_impl_hooks.png" />
+	<h2>Conclusion</h2>
+	<ol>
+		<li>Probes can deliver concise and precise performance
+			measurements for an application or a group of applications that are
+			based on the same frameworks/libraries.</li>
+		<li>Probes have to potential to define reasonable performance
+			metrics for specific applications that can be shared across a team of
+			developers.</li>
+		<li>Probes cause significantly less side-effects compared to
+			general profiling.</li>
+		<li>Probes can make use of more information than a profiler, such
+			as application state, parameter values and return values.</li>
+		<li>Implementing probes is some effort. This may be of less
+			significance when probes can be reused. However, in scenarios were
+			reuse in not intended - for example the explorative search for
+			performance issues - their use may be too much effort.</li>
+	</ol>
+
+
 
 </body>
 </html>
+
+
+
+
+
