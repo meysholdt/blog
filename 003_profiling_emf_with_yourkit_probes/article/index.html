@@ -5,31 +5,42 @@
 <title>Measuring EMF Resource performance with Yourkit Probes</title>
 </head>
 <body>
-	<p>Disclaimer: I'm not affiliated with Yourkit, but I am grateful
-		for their free licenses ??? for open source projects. I've been using
-		Yourkit for my work on Xtext???/Xtend???.</p>
+	<p>
+		Disclaimer: I'm not affiliated with <a href="http://www.yourkit.com/">
+			Yourkit</a>, but I am grateful for their <a
+			href="http://www.yourkit.com/purchase/">free licenses for open
+			source projects</a>. I've been using Yourkit for my work on <a
+			href="http://www.xtext.org/">Xtext</a> and <a
+			href="http://www.xtend-lang.de/">Xtend</a>.
+	</p>
 	<h2>Introduction</h2>
-	<p>Improving the performance of an application can be a challenging
-		thing to do. As a developer, you usually have some immediate ideas of
-		what are the performance bottlenecks. However, as Ed said in his
-		presentation ??? at the last EclipseCon NA, "Don't trust yourself,
-		don't trust your friends, and don't even trust me."</p>
+	<p>
+		Improving the performance of an application can be a challenging thing
+		to do. As a developer, you usually have some immediate ideas of what
+		are the performance bottlenecks. However, as Ed said in <a
+			href="his
+		presentation">his presentation</a> at EclipseCon North
+		America 2013, "Don't trust yourself, don't trust your friends, and
+		don't even trust me."
+	</p>
 	<p>I fully approve his message. Why? Experience shows there is
 		truth in this statement.</p>
 	<p>If trust does't work, we need facts: We need to measure. We need
-		to measure how much time execution of our program takes for specific
-		tasks. Two tools probably came to your mind when you read this:</p>
+		to measure how much time it takes to execute our program for specific
+		tasks. Two tools probably come to your mind as you read this:</p>
 	<ul>
 		<li>java.lang.System.nanoSeconds(): This simple but useful method
-			give you access to a decently precise time stamp at any time. You can
-			call this method from your own code and calculate and report the time
-			for what every your desire. But there's a catch: You need to modify
-			the code, which you sometimes can't do because the code is part of a
-			library/framework or you don't want to do it, because it would would
-			pollute the code.</li>
-		<li>A Profiler (such as Yourkit ???): This powerful tool lets you
-			measure measure the execution time of every since method invocation.
-			Sounds awesome? Yes, but there are some problems with it:</li>
+			gives you access to a decently precise time stamp at any time. You
+			can call this method from your own code and calculate and report the
+			time for what every your desire. But there's a catch: You need to
+			modify the code that you want to inspect, which you sometimes can't
+			do because the code is part of a library/framework or you just don't
+			want to pollute the code.</li>
+		<li>A Profiler (such as <a href="http://www.yourkit.com/">Yourkit</a>):
+			This powerful tool lets you measure measure the execution time of
+			every since method invocation. Sounds awesome? Yes, but there are
+			some problems with it:
+		</li>
 		<ul>
 			<li>The "lost in the jungle syndrome": The result of a profiling
 				session are a bunch of trees representing all stated of the call
@@ -68,7 +79,7 @@
 			be invoked before or after a method has been invoked.</li>
 		<li>Installing pre-/post-invocation hooks into methods may sounds
 			familiar to you from Aspect Oriented Programming (AOP). It's indeed
-			the same idea, but unlike in AOP you don't need to a special
+			the same kind of hook, but unlike in AOP you don't need to a special
 			compiler: Yourkit registers the probes at runtime via its Java agent.
 			Therefore, probes don't change your build and are applicable for
 			already compiled libraries.</li>
@@ -83,19 +94,26 @@
 			method's parameter- and return values.</li>
 		<li>Youkit encourages you to build a Java data structure for your
 			measured data that resembles a relational data base. If you follow
-			that pattern, youkit has a nice graphical user interface to explore
+			that pattern, Yourkit has a nice graphical user interface to explore
 			your measured data.</li>
 	</ul>
 	<h2>Probing EMF ResourceSets and Resources</h2>
-	<p>As an example and for further illustration, I've build a small
-		probe that tracks instantiation of EMF ResourceSets and invocation of
-		EMF Resources. In the terminology of the Eclipse Modeling Framework
-		(EMF) a Resource usually represents a file from the file system. A
-		resource furthermore provides implementations to load a file into
-		memory as an object tree (aka model) or persist a tree back to disk.</p>
-	<p>The following screenshot shows an Eclipse with two open editors.
-		One editor shows an *.xtend ??? file and the other one a *.genmodel.
-		Even though both use EMF under the hood, they have little in common:</p>
+	<p>
+		As an example and for further illustration, I've build a small probe
+		that tracks instantiation of EMF ResourceSets and invocation of EMF
+		Resources. In the terminology of the <a
+			href="http://www.eclipse.org/modeling/emf/">Eclipse Modeling
+			Framework (EMF)</a> a Resource usually represents a file from the file
+		system. A resource furthermore provides implementations to load a file
+		into memory as an object tree (aka model) or persist a tree back to
+		disk.
+	</p>
+	<p>
+		The following screenshot shows an Eclipse IDE with two open editors.
+		One editor shows an <a href="http://www.xtend-lang.org">*.xtend</a>
+		file and the other one a *.genmodel. Even though both use EMF under
+		the hood, they have little in common:
+	</p>
 	<ol>
 		<li>The *.xtend text-editor shows a file persisted as plain text;
 			It's Resource.load() implementation delegates to an ANTLR parser.</li>
@@ -130,28 +148,37 @@
 	<img src="images/yourkit_open_genmodel.png">
 	<h2>Implementing a Probe</h2>
 	<p>
-		<i>You can find the full source code of this example here on
-			github.</i> ???
+		<i>You can find the full source code of this example <a
+			href="https://github.com/meysholdt/blog/tree/master/003_profiling_emf_with_yourkit_probes">here</a>
+			on github.
+		</i>
 	</p>
 	<p>Before we start implementing a probe, some considerations:</p>
 	<ul>
 		<li>The code that the probe hooks into needs to have the probe
 			implementation on the classpath. Furthermore, it is helpful if the
-			probe has the code it hooks into on the classpath, sicen otherwise
+			probe has the code it hooks into on the classpath, since otherwise
 			the probe implementation would need to use Java reflection to inspect
 			the to-be-analyzed object. This sounds tricky since it is in fact a
 			cyclic dependency between the probe and the inspected code. Luckily
-			Eclipse has a simple mechanism to contribute to plugin's classapth:
-			Fragments. A fragment is a bundle with class files, own dependencies
-			and extension points that at runtime is integrated into the classpath
-			of a chosen host-plugin. We choose org.eclipse.emf.ecore to be that
-			host-plugin.</li>
-		<li>Probes need to be registered ???: We could do that by
-			changing the JVM's startup arguments, but in an Eclipse environment
-			it seems more convenient to use the extension point
-			org.eclipse.ui.startup.</li>
-		<li>The probe implementation uses Java API provided by Yourkit.
-			This API ca be found in /lib/yjp.jar inside the Yourkit installation.</li>
+			Eclipse has a simple mechanism to contribute to a plugin's classapth:
+			<a href="http://wiki.eclipse.org/FAQ_What_is_a_plug-in_fragment%3F">Fragments</a>.
+			A fragment is a bundle with class files, own dependencies and
+			extension points that at runtime is integrated into the classpath of
+			a chosen host-plugin. We choose org.eclipse.emf.ecore to be that
+			host-plugin.
+		</li>
+		<li>Probes need to <a
+			href="http://www.yourkit.com/docs/12/help/register_probes.jsp">be
+				registered</a>: We could do that by changing the JVM's startup
+			arguments, but in an Eclipse environment it seems more convenient to
+			use the extension point org.eclipse.ui.startup.
+		</li>
+		<li>The probe implementation uses <a
+			href="http://www.yourkit.com/docs/12/api/index.html">Java API
+				provided by Yourkit</a>. This API ca be found in /lib/yjp.jar inside the
+			Yourkit installation.
+		</li>
 	</ul>
 	<p>The next screenshot shows the the implementation of the probe.
 		It is a java class with static members to
@@ -177,7 +204,8 @@
 			onEnter method.</li>
 		<li>@Param(1) gives access to the first parameter of the
 			intercepted method.</li>
-		<li>etc. (???)</li>
+		<li><a
+			href="http://www.yourkit.com/docs/12/help/event_method_call.jsp">etc.</a></li>
 	</ul>
 	<img src="images/probe_impl_hooks.png" />
 	<h2>Conclusion</h2>
@@ -185,7 +213,7 @@
 		<li>Probes can deliver concise and precise performance
 			measurements for an application or a group of applications that are
 			based on the same frameworks/libraries.</li>
-		<li>Probes have to potential to define reasonable performance
+		<li>Probes have the potential to define reasonable performance
 			metrics for specific applications that can be shared across a team of
 			developers.</li>
 		<li>Probes cause significantly less side-effects compared to
