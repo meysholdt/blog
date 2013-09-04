@@ -1,0 +1,14 @@
+/* XPECT_SETUP org.domainmodel.tests.validation.DMValidationTest END_SETUP */
+
+package pkg1 {
+	entity MyEntity {
+
+		// capitalized property names are discouraged
+		// XPECT warnings --> "Name should start with a foobar" at "Property1"
+		Property1 : String
+		
+		// the character % is not valid syntax
+		// XPECT errors --> "extraneous test '%' expecting '}'" at "}"
+		%
+	}
+}

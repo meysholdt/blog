@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Introduction to Xpect</title>
+</head>
+<body>
+
+	<h1>Introduction to Xpect</h1>
+	 <i>Xpect is a framework that helps you to test, discuss, and
+  explain Xtext languages.</i>
+ <p>
+  Before I start, I'd like to tell a bit about me, since it gives a
+  context on why I created <a href="http://www.xpect-tests.org">Xpect</a>.
+  As you may know, I've been a committer at the Eclipse Xtext project
+  since January 2009. Besides working on <a href="http://xtext.org/">Xtext</a>
+  (and <a href="http://xtend-lang.org/">Xtend</a>), I have been applying
+  this technology in several customer projects: Project sizes varied
+  from man days to man years and my role varied between designing a
+  language and providing professional support for technical challenges.
+ </p>
+ <p>All projects have in common that we wanted to develop Xtext
+  languages. Sometimes we were free to design syntax and semantics from
+  scratch and sometimes we were bound to a language specification. In
+  most projects we needed to...</p>
+ <ul>
+  <li>have automated tests for our language tooling.</li>
+  <li>discuss design and implementations decisions.</li>
+  <li>explain the language and tooling to fellow developers and
+   prospective users.</li>
+  <li>allow our implementation to be reviewed regarding
+   completeness and correctness. I.e. pass an acceptance test.</li>
+  <li>set up test stubs for fellow developers to implement tests.</li>
+ </ul>
+ <p>To comply with these use cases I found myself writing plenty of
+  JUnit tests and creating many example documents of the language, often
+  with redundant content. I could not use the JUnit test to explain and
+  discuss the language with others, since the Java code was distracting
+  them from what I wanted to show. Furthermore, I was annoyed
+  that I could not use the language's Xtext editor to craft test data,
+  since the test data was embedded in string literals in the test's Java
+  code. Also, when I wrote example documents, I found myself inserting
+  comments to explain the language: "This expression will evaluate to
+  xxx", "This statement causes error yyy", "This cross reference links
+  to zzz", etc.</p>
+ <p>The idea arose to converge test cases and example documents:
+  What if I could embed test expectations within comments inside my
+  example documents? What if I could find a format for these comments so
+  they're both human understandable and automatically verifiable by a
+  test suite?</p>
+ <p>
+  Xpect realizes this idea. The version introduced by this blog post or
+  older versions are actively being used by in-house projects, several
+  customer projects, and open source projects such as <a
+   href="http://git.eclipse.org/c/emf/org.eclipse.emf.git/tree/tests/org.eclipse.emf.test.ecore.xcore/src/org/eclipse/emf/test/ecore/xcore/validation">Xcore</a>
+  and <a
+   href="http://code.google.com/a/eclipselabs.org/p/spray/source/browse/tests/org.eclipselabs.spray.styles.tests/model/">Spray</a>.
+ </p>
+ <h2>One File, Two Languages</h2>
+
+ <a
+  href="http://4.bp.blogspot.com/-e88BpWa-uj8/UiX2k1dS38I/AAAAAAAAAJw/88CD8Rc2ZsY/s1600/xpect_editor_junit_view.png"><img
+  border="0"
+  src="http://4.bp.blogspot.com/-e88BpWa-uj8/UiX2k1dS38I/AAAAAAAAAJw/88CD8Rc2ZsY/s870/xpect_editor_junit_view.png" /></a>
+
+ <p>
+  What you can see in the screenshot above is a JUnit that has been
+  executed and which passed. The test class is <i>org.domainmodel.tests.validation.DMValidationTest</i>
+  and it has executed a file named <i>test1.dmodel.xt</i>. The file
+  defines two test cases, one called <i>warnings</i> and one called <i>errors</i>.
+  On the right hand side you can see the file's contents in an editor.
+  The editor generically combines support for two languages: First, the
+  language that is being tested. In the screenshot this is the
+  Domainmodel language (*.dmodel) which ships with Xtext as an example
+  language. Secondly, the editor supports the Xpect language (*.xt). The
+  two languages do not interfere with each other since the Domainmodel
+  language ignores text insides comments and the Xpect language ignores
+  text that doesn't start with an "XPECT" keyword. The editor applies a
+  greenish background color to Xpect syntax.
+ </p>
+
+ <p>
+  Let's take a closer look at the Xpect syntax. At the beginning of
+  <i>test1.dmodel.xt</i>, there is a region called
+  <span style="font: 11.0px Monaco; background-color: #c5f9e0; color: #931a68">XPECT_SETUP</span>.
+  It holds a reference to the JUnit test that can run this file. Further down we find test cases such as:
+ </p>
+
+ <p style="margin: 0.0px 0.0px 0.0px 0.0px;font: 11.0px Monaco; color: #4e9072">// capitalized property names are discouraged</p>
+ <p style="margin: 0.0px 0.0px 0.0px 0.0px;font: 11.0px Monaco"><span style="color: #4e9072;">// </span><span style="background-color: #c5f9e0; color: #931a68">XPECT</span> warnings --&gt; <span style="background-color: #c5f9e0;">"Name should start with a lowercase" at "Property1"</span></p>
+ <p style="margin: 0.0px 0.0px 0.0px 0.0px;font: 11.0px Monaco">Property1 : String</p>
+ <p>
+  The first line is an optional title for the test. <i>warnings</i>
+  references a JUnit test method (implemented in Java) and the part
+  following the <span style="white-space: nowrap;"><i>--&gt;</i></span> is the test expectation, which is passed
+  as a parameter into the JUnit test method. The test method can then
+  compare the test expectation with what it calculated to be the actual
+  test value and pass or fail accordingly. For this example, the test
+  expectation is composed of the error/warning message (<span
+   style="font: 11.0px Monaco; background-color: #c5f9e0;">Name
+   should start with a lowercase</span>) and the text that would be underlined
+  by the red curly line in the editor (<span
+   style="font: 11.0px Monaco; background-color: #c5f9e0;">Property1</span>).
+  For this validation test, the <span
+   style="font: 11.0px Monaco; background-color: #c5f9e0; color: #931a68">XPECT</span>
+  statement collects all errors or warning occurring in the next line.
+  A feature you might find very useful is, that the
+  <span
+   style="font: 11.0px Monaco; background-color: #c5f9e0; color: #931a68">XPECT</span>
+  statement <i>consumes</i> error or warning markers: An expected error
+  or warning will
+  <i>not</i> be shown as an error marker in the Eclipse editor.
+ </p>
+ 
+ 
+ <h2>Synchronize Expectations and Implementation</h2>
+
+ <p>The fact that Xpect uses textual expectations and embeds them
+  into DSL documents opens the door for another awesome (IMHO) feature:
+  Using the Eclipse comparison editor to inspect failed tests and to fix
+  out-dated test expectations:</p>
+
+ <a
+  href="http://1.bp.blogspot.com/-dsFfA6vC70g/UiX2lqluC3I/AAAAAAAAAJ0/0Ms4Fhh7UmM/s1600/xpect_test_failure.png"><img
+  border="0"
+  src="http://1.bp.blogspot.com/-dsFfA6vC70g/UiX2lqluC3I/AAAAAAAAAJ0/0Ms4Fhh7UmM/s870/xpect_test_failure.png" /></a>
+
+
+ <p>
+  When one or more tests fail and you want to fix them, it is crucial to quickly
+  get an overview over all failed tests. With Xpect you can not
+  only see all failed test cases from one file in a single comparison
+  editor, but there are also no assert statements which sometimes
+  prevent execution of follow-up assert statements and thereby hide valuable hints on why the test failed. The comparison
+  editor, as the name suggests, also lets you edit the test file.
+ </p>
+ 
+ <h2>Reusable Test Library</h2>
+ <p>
+  In Xtext projects, there are several scenarios where it is reasonable to have test coverage. The validation test I explained
+  earlier in this article is just one of these scenarios. Xpect ships the
+  Java-part for such tests <a
+   href="https://github.com/meysholdt/Xpect/tree/master/org.xpect.xtext.lib/src/org/xpect/xtext/lib/tests">as
+   a library</a>. There is also an <a
+   href="https://github.com/meysholdt/Xpect/tree/master/org.eclipse.xtext.example.domainmodel.xpect.tests/src/org/eclipse/xtext/example/domainmodel/xpect/tests">example
+   project</a> that demonstrates their usage.
+ </p>
+ <p>There are test for:</p>
+ <ul>
+  <li>The parser and Abstract Syntax Tree (AST) structure (demo only, no library).</li>
+  <li>Code generators implemented via Xtext's IGenerator interface.</li>
+  <li>Validation: Test for absence, presence, message and location of errors and warnings.</li>
+  <li>Linking: Verify a cross reference resolved to the intended model element</li>
+  <li>Scoping: Verify the expected names are included or excluded from a cross references's scope.</li>
+  <li>ResourceDescriptions: Verify a document exports the intended model elements with proper names.</li>
+  <li>JvmModelInferrer: For languages using Xbase, test the inferred JVM model</li>
+ </ul>
+ <p>There will be more tests in future versions of Xpect.</p>
+ 
+ 
+ <h2>Support for Standalone and Workspace Tests</h2>
+ <p>UI-independent parts of Xtext, such as the parser, can operate
+  standalone (i.e. without OSGi and Eclipse Workspace). The same is true
+  for Xpect. For capabilities where Xtext does not require OSGi or an
+  Eclipse Workspace, Xpect does not do so either. Consequently, Xpect
+  tests can be executed as plain JUnit test or Plug-In JUnit tests.</p>
+
+ <p>
+  Since both scenarios require different kinds of setups, both can be
+  configured separately in the <span
+   style="font: 11.0px Monaco; background-color: #c5f9e0; color: #931a68">XPECT_SETUP</span>
+  section. When executed as plain JUnit test, the
+  ResourceSet-configuration is used and for Plug-In JUnit tests, the
+  Workspace-Configuration is used.
+ </p>
+
+<a
+  href="http://4.bp.blogspot.com/-2rqhU60jnRk/UiX2kyQWQhI/AAAAAAAAAJo/sCrzUqvb-VQ/s1600/xpect_setup.png"><img
+  border="0"
+  src="http://4.bp.blogspot.com/-2rqhU60jnRk/UiX2kyQWQhI/AAAAAAAAAJo/sCrzUqvb-VQ/s700/xpect_setup.png" /></a>
+
+ <p>The screenshot also illustrates how an additional file can be
+  loaded so that it is included in the current ResourceSet or Workspace during
+  test execution.</p>
+
+ <h2>Suites: Combine Tests in the Same File</h2>
+
+ <p>When explaining a specific concept of a language, it is helpful
+  to look at the language concept from all sides: This is the valid
+  syntax, these scenarios are disallowed, this is how cross references
+  resolve, this is how it is executed, etc. So far, testers were
+  required to create a new test file for every technical aspect. With
+  Xpect test suites, however, it is possible to combine the Java-parts
+  of various tests into a single test suite.</p>
+
+<a
+  href="http://2.bp.blogspot.com/-urTT8gnk02Q/UiX2k_gFoPI/AAAAAAAAAJs/QNf81p8whe8/s1600/xpect_suite.png"><img
+  border="0"
+  src="http://2.bp.blogspot.com/-urTT8gnk02Q/UiX2k_gFoPI/AAAAAAAAAJs/QNf81p8whe8/s800/xpect_suite.png" /></a>
+
+
+ <p>
+  The test suite <i>XtextTests</i> combines several tests so that in <i>CombiningMultipleTests.dmodel.xt</i>
+  test methods from all these tests can be used. This allows to group
+  tests by language concept.
+ </p>
+
+
+ <h2>Works with CI Builds</h2>
+
+ <p>Xpect tests have proven to run fine with Maven, Tycho, Surefire,
+  Buckminster and Jenkins. No special integration is necessary since
+  Xpect tests run as JUnit tests.</p>
+
+ <h2>Source & Download</h2>
+ <p>
+  You can find a link to the update site at <a
+   href="http://www.xpect-tests.org/">www.xpect-tests.org</a>. The
+  source code and an issue tracker are on the <a
+   href="https://github.com/meysholdt/Xpect">github project page</a>.
+ </p>
+ 
+</body>
+</html>
