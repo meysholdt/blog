@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>New Eclipse JUnit Feature: Run any subtree of tests
+	individually</title>
+</head>
+<body>
+	<p>In Eclipse, the JUnit view nicely visualizes execution status
+		and results of JUnit tests. JUnit tests usually are Java classes with
+		test methods or Java classes annotated with @SuiteClasses, which
+		compose multiple other test classes or suites.</p>
+	<p>
+		But JUnit is more powerful than that. It allows you to implement
+		custom <a href="https://github.com/junit-team/junit/wiki/Test-runners"
+			target="_blank">test runners</a>. Those test runners are responsible
+		for creating a tree structure of test descriptions. Later the runner
+		needs to execute all leafs of that tree as test cases.
+	</p>
+	<p>
+		A node in this tree of tests is not necessarily backed by a Java
+		class, as it is for test suites. It can be something purely virtual.
+		JUnit itself ships with a test runner for which this is true: <a
+			href="https://github.com/junit-team/junit/wiki/Parameterized-tests"
+			target="_blank"><i>org.junit.runners.Parameterized</i></a>.
+	</p>
+	<img width="800" alt="" src="images/ParameterizedTestAll2.png"
+		align="middle">
+	<p>
+		The screenshots above shows a <i>Parameterized</i> test on the
+		left-hand-side and the Eclipse JUnit View (after the test has been
+		executed) on the right-hand-side. The method <i>parameters()</i>
+		returns a list of test data sets and the <i>Parameterized</i> runner
+		will call the constructor of this test class for each data set.
+		Consequently, the number of constructor parameters must match the
+		number of items in each data set. For each data set, all test methods
+		are executed and what we get, effectively, is a matrix test.
+	</p>
+	<p>
+		In the screenshot of the JUnit view we can see how the <i>Parameterized</i>
+		runner presents the test matrix as a tree: The test class itself is
+		the root node, every data set is a subtree and every entry of the test
+		matrix is a leaf.
+	</p>
+	<p>
+		As of now (Eclipse Mars M4), it is possible to run individual subtrees
+		by choosing "run" from the context menu. This effectively means to
+		execute a row from the test matrix.
+	</p>
+	<img width="800" alt="" src="images/RunSubtreeAll.png">
+	<p>
+		Additionally, it is now possible to run a single column from the test
+		matrix by running a single method from a <i>Parameterized</i> test.
+	</p>
+	<img width="800" alt="" src="images/RunMethodAll.png">
+	<p>Note that in the picture on the left-hand-side I'm explicitly
+		clicking on the method's name. Clicking elsewhere would execute all
+		test methods from the class.</p>
+	<p>
+		The new mechanism to filter down test description trees can achieve
+		this without being specific to to JUnit's <i>Parameterized</i> runner:
+		The filter first extracts the leading part of the test desription's
+		name which is a valid Java identifier. The test is executed if this
+		leading part exists and if it equals the to-be-executed method's name.
+
+	</p>
+	<p>
+		I would like to thank <a href="http://www.numberfour.eu/">NumberFour</a>
+		for having me implement this fix specifically for <a
+			href="http://www.xpect-tests.org">Xpect</a>. Gratitude also goes to <a
+			href="http://www.itemis.de">itemis</a>, my employer, who gave me the
+		time to generalize and contribute the fix to Eclipse JDT. Also I would
+		like to thank the JDT team for <a
+			href="https://bugs.eclipse.org/bugs/show_bug.cgi?id=443498#c9">
+			accepting the contribution</a>.
+	</p>
+</body>
+</html>
